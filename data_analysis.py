@@ -77,7 +77,7 @@ def describe_data(data):
 	print 'Max:', np.max(data)
 	return np.mean(data)
 
-def find_engagement_stat(key_name, acct_data):
+def get_engagement_stat(key_name, acct_data):
 	# total minutes visited for each account
 	print '********** Stat of', key_name, '**********' 
 	total_by_account = {}
@@ -116,6 +116,19 @@ def get_engagement_by_rating(paid_engagement_in_first_week, passing_students):
 			non_passing_engagement.append(row)
 	return [passing_engagement, non_passing_engagement]
 
+def compare_mean_passing_non_passing(non_passing_engagement_by_account, passing_engagement_by_account, field_name):
+	#print '********** mean of non_passing_engagement ********** '
+	non_passing_total_mins_visited_mean = get_engagement_stat(field_name, non_passing_engagement_by_account)
+	#print 'non_passing', non_passing_total_mins_visited_mean
+	#print '********** mean of passing_engagement ********** '
+	passing_total_mins_visited_mean = get_engagement_stat(field_name, passing_engagement_by_account)
+	#print 'passing', passing_total_mins_visited_mean
+	if non_passing_total_mins_visited_mean == 0:
+		print 'Error: non_passing_engagement_' + field_name, 'is zero!'
+		return 
+	print "Passing mean over non_passing mean of", field_name + ':', str((passing_total_mins_visited_mean - non_passing_total_mins_visited_mean) / non_passing_total_mins_visited_mean * 100) + "%"
+
+
 def main():
 	print '********** Read csv data **********'
 	#Load Data and get general information
@@ -126,7 +139,7 @@ def main():
 	#daily_engagement_full = read_data('daily_engagement_full.csv')
 	#print_data(daily_engagement_full, 0, 10)
 	project_submissions = read_data('project_submissions.csv')
-	print_data(project_submissions, 0, 10)
+	print_data(project_submissions, 0, 2)
 
 	### For each of these three tables, find the number of rows in the table and
 	### the number of unique students in the table. To find the number of unique
@@ -257,9 +270,9 @@ def main():
 	print 'Standard deviation:', np.std(all_minutes)
 	print 'Min:', np.min(all_minutes)
 	print 'Max:', np.max(all_minutes)"""
-	find_engagement_stat('total_minutes_visited', engagement_by_account)
-	find_engagement_stat('lessons_completed', engagement_by_account)
-	find_engagement_stat('has_visited', engagement_by_account)
+	get_engagement_stat('total_minutes_visited', engagement_by_account)
+	get_engagement_stat('lessons_completed', engagement_by_account)
+	get_engagement_stat('has_visited', engagement_by_account)
 	"""
 	#Find suprising data --> found the account has cancelled and join again --> fixed in within_one_week function
 	#if one user has more than one record, we use the most recent join date instead
@@ -301,19 +314,54 @@ def main():
 
 	non_passing_engagement_by_account = group_data(non_passing_engagement, 'account_key')
 	passing_engagement_by_account = group_data(passing_engagement, 'account_key')
-	
-	print '********** non_passing_engagement ********** '
-	non_passing_total_mins_visited_mean = find_engagement_stat('total_minutes_visited', non_passing_engagement_by_account)
-	#print 'non_passing', non_passing_total_mins_visited_mean
-	print '********** passing_engagement ********** '
-	passing_total_mins_visited_mean = find_engagement_stat('total_minutes_visited', passing_engagement_by_account)
-	#print 'passing', passing_total_mins_visited_mean
-	print "Passing mean over non_passing mean of total minutes visited: ", (passing_total_mins_visited_mean - non_passing_total_mins_visited_mean) / non_passing_total_mins_visited_mean * 100, "%"
 
+	compare_mean_passing_non_passing(non_passing_engagement_by_account, passing_engagement_by_account, 'total_minutes_visited')
+	compare_mean_passing_non_passing(non_passing_engagement_by_account, passing_engagement_by_account, 'num_courses_visited')
+	compare_mean_passing_non_passing(non_passing_engagement_by_account, passing_engagement_by_account, 'projects_completed')
 
+	#passing and non passing students in each month
+	#Find how many months are there
+	months_pass_non_pass = defaultdict(list)
+	for row in paid_engagement_in_first_week:
+		months_pass_non_pass[row['utc_date'].month] = [0, 0]
 
+	#Find passing and non passing students in each month
+	for row in passing_engagement:
+		months_pass_non_pass[row['utc_date'].month][0] += 1
 
+	for row in non_passing_engagement:
+		months_pass_non_pass[row['utc_date'].month][1] += 1
 
+	print months_pass_non_pass
+
+	#Find month that has max people and min people pass and non pass the project
+	max_pass = [0, -1]
+	max_non_pass = [0, -1]
+	min_pass = [0, float("inf")]
+	min_non_pass = [0, float("inf")]
+	months_precent_pass_over_non_pass = dict()
+	for key, value in months_pass_non_pass.items():
+		#pass data
+		if value[0] > max_pass[1]:
+			max_pass[0] = key
+			max_pass[1] = value[0]
+		if value[0] < min_pass[1]:
+			min_pass[0] = key
+			min_pass[1] = value[0]
+		#non pass data
+		if value[1] > max_non_pass[1]:
+			max_non_pass[0] = key
+			max_non_pass[1] = value[1]
+		if value[1] < min_non_pass[1]:
+			min_non_pass[0] = key
+			min_non_pass[1] = value[1]
+		if value[1] != 0:
+			months_precent_pass_over_non_pass[key] = (value[0] - value[1]) / float(value[1]) * 100
+		else:
+			print 'Error: cannot find the precent for', key, 'month since non_passing_students is 0.'
+
+	print 'max_pass [month,count]:', max_pass, 'min_pass [month,count]:', min_pass, 'max_non_pass [month,count]:', max_non_pass, 'min_non_pass [month,count]:', min_non_pass 
+	print 'months_precent_pass_over_non_pass <month: precent> :', months_precent_pass_over_non_pass
 
 
 main()
