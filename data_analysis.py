@@ -63,17 +63,43 @@ def within_one_week(join_date, engagement_date):
 	time_delta = engagement_date - join_date
 	return time_delta.days < 7 and time_delta.days >= 0
 
+def group_data(data, key_name):
+	grouped_data = defaultdict(list)
+	for data_point in data:
+		account_key = data_point[key_name]
+		grouped_data[account_key].append(data_point)
+	return grouped_data
+
+def describe_data(data):
+	print 'Mean:', np.mean(data)
+	print 'Standard deviation:', np.std(data)
+	print 'Min:', np.min(data)
+	print 'Max:', np.max(data)
+
+def find_engagement_stat(key_name, acct_data):
+	# total minutes visited for each account
+	print '********** Stat of', key_name, '**********' 
+	total_by_account = {}
+	for account_key, engagement_for_student in acct_data.items():
+		total = 0
+		for engagement_record in engagement_for_student:
+			total += engagement_record[key_name]
+		total_by_account[account_key] = total
+
+    # get all minutes as a list and print out some stat
+	describe_data(total_by_account.values())
+
 def main():
 	print '********** Read csv data **********'
 	#Load Data and get general information
 	enrollments = read_data('enrollments.csv')
-	#print_data(enrollments, 0, 5)
+	print_data(enrollments, 0, 2)
 	daily_engagement = read_data('daily_engagement.csv')
-	#print_data(daily_engagement, 0, 5)
+	print_data(daily_engagement, 0, 2)
 	#daily_engagement_full = read_data('daily_engagement_full.csv')
 	#print_data(daily_engagement_full, 0, 10)
 	project_submissions = read_data('project_submissions.csv')
-	#print_data(project_submissions, 0, 5)
+	print_data(project_submissions, 0, 2)
 
 	### For each of these three tables, find the number of rows in the table and
 	### the number of unique students in the table. To find the number of unique
@@ -172,14 +198,16 @@ def main():
 
 	print len(paid_students_engagement)
 
-	print '********** Stat of minutes spent in classroom **********'
+	# print '********** Stat of minutes spent in classroom **********'
 	# find all engagement record belong to a sepecific account
-	engagement_by_account = defaultdict(list)
+
+	engagement_by_account = group_data(paid_students_engagement, 'account_key')
+	"""engagement_by_account = defaultdict(list)
 	for row in paid_students_engagement:
 		account_key = row['account_key']
-		engagement_by_account[account_key].append(row)
+		engagement_by_account[account_key].append(row)"""
 
-	# total minutes visited for each account
+	"""# total minutes visited for each account
 	total_minutes_by_account = {}
 	for account_key, engagement_for_student in engagement_by_account.items():
 		total_minutes = 0
@@ -192,12 +220,14 @@ def main():
 	print 'Mean:', np.mean(all_minutes)
 	print 'Standard deviation:', np.std(all_minutes)
 	print 'Min:', np.min(all_minutes)
-	print 'Max:', np.max(all_minutes)
+	print 'Max:', np.max(all_minutes)"""
+	find_engagement_stat('total_minutes_visited', engagement_by_account)
+	find_engagement_stat('lessons_completed', engagement_by_account)
 
 	"""
 	#Find suprising data --> found the account has cancelled and join again --> fixed in within_one_week function
 	#if one user has more than one record, we use the most recent join date instead
-	
+
 	max_minutes = np.max(all_minutes)
 	for row in enrollments:
 		if row['account_key'] == '108':
