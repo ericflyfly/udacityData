@@ -1,5 +1,7 @@
 import unicodecsv
 from datetime import datetime as dt
+from collections import defaultdict
+import numpy as np
 
 #load csv data
 def read_data(filename):
@@ -169,6 +171,29 @@ def main():
 			paid_students_engagement.append(row)
 
 	print len(paid_students_engagement)
+
+	print '********** Stat of minutes spent in classroom **********'
+	# find all engagement record belong to a sepecific account
+	engagement_by_account = defaultdict(list)
+	for row in paid_students_engagement:
+		account_key = row['account_key']
+		engagement_by_account[account_key].append(row)
+
+	# total minutes visited for each account
+	total_minutes_by_account = {}
+	for account_key, engagement_for_student in engagement_by_account.items():
+		total_minutes = 0
+		for engagement_record in engagement_for_student:
+			total_minutes += engagement_record['total_minutes_visited']
+		total_minutes_by_account[account_key] = total_minutes
+
+    # get all minutes as a list and print out some stat
+	all_minutes = total_minutes_by_account.values()
+	print 'Mean:', np.mean(all_minutes)
+	print 'Standard deviation:', np.std(all_minutes)
+	print 'Min:', np.min(all_minutes)
+	print 'Max:', np.max(all_minutes)
+
 
 
 main()
