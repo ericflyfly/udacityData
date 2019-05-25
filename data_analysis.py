@@ -89,6 +89,13 @@ def find_engagement_stat(key_name, acct_data):
     # get all minutes as a list and print out some stat
 	describe_data(total_by_account.values())
 
+def add_has_visited(data):
+	for data_point in data:
+		if data_point['num_courses_visited'] > 0:
+			data_point['has_visited'] = 1
+		else:
+			data_point['has_visited'] = 0
+
 def main():
 	print '********** Read csv data **********'
 	#Load Data and get general information
@@ -99,7 +106,7 @@ def main():
 	#daily_engagement_full = read_data('daily_engagement_full.csv')
 	#print_data(daily_engagement_full, 0, 10)
 	project_submissions = read_data('project_submissions.csv')
-	print_data(project_submissions, 0, 2)
+	print_data(project_submissions, 0, 10)
 
 	### For each of these three tables, find the number of rows in the table and
 	### the number of unique students in the table. To find the number of unique
@@ -154,7 +161,7 @@ def main():
 		if row['account_key'] not in engagement_account:
 			count_missing += 1
 			#print row
-	print 'Number ofenrollement record with no corresponding engagement data:  ', count_missing
+	print 'Number of enrollement record with no corresponding engagement data:  ', count_missing
 
 	### enroll at least a day ###
 	count_at_least_one_day = 0
@@ -177,6 +184,18 @@ def main():
 	project_submissions_cleaned = remove_test_acct_data(project_submissions, test_acct_key)
 	print '********** Length of cleaned data **********'
 	print len(enrollments_cleaned), len(daily_engagement_cleaned), len(project_submissions_cleaned)
+	# add a new field to find does the student visited any lesson on that day
+	add_has_visited(daily_engagement_cleaned)
+
+
+#####################################
+#                 6                 #
+#####################################
+
+## Create a dictionary named paid_students containing all students who either
+## haven't canceled yet or who remained enrolled for more than 7 days. The keys
+## should be account keys, and the values should be the date the student enrolled.
+
 
 	### get paid students ###
 	print '********** Get paid_students **********'
@@ -191,19 +210,19 @@ def main():
 
 	### get engagement record for paid students only ###
 	print '********** Get engagement record **********'
-	paid_students_engagement = []
+	paid_engagement_in_first_week = []
 	for row in daily_engagement_cleaned:
 		if row['account_key'] in paid_students and within_one_week(paid_students[row['account_key']], row['utc_date']):
-			paid_students_engagement.append(row)
+			paid_engagement_in_first_week.append(row)
 
-	print len(paid_students_engagement)
+	print len(paid_engagement_in_first_week)
 
 	# print '********** Stat of minutes spent in classroom **********'
 	# find all engagement record belong to a sepecific account
 
-	engagement_by_account = group_data(paid_students_engagement, 'account_key')
+	engagement_by_account = group_data(paid_engagement_in_first_week, 'account_key')
 	"""engagement_by_account = defaultdict(list)
-	for row in paid_students_engagement:
+	for row in paid_engagement_in_first_week:
 		account_key = row['account_key']
 		engagement_by_account[account_key].append(row)"""
 
@@ -223,7 +242,7 @@ def main():
 	print 'Max:', np.max(all_minutes)"""
 	find_engagement_stat('total_minutes_visited', engagement_by_account)
 	find_engagement_stat('lessons_completed', engagement_by_account)
-
+	find_engagement_stat('has_visited', engagement_by_account)
 	"""
 	#Find suprising data --> found the account has cancelled and join again --> fixed in within_one_week function
 	#if one user has more than one record, we use the most recent join date instead
@@ -240,6 +259,36 @@ def main():
 				print row
 			break
 	"""
+
+	######################################
+	#                 11                 #
+	######################################
+
+	## Create two lists of engagement data for paid students in the first week.
+	## The first list should contain data for students who eventually pass the
+	## subway project, and the second list should contain data for students
+	## who do not.
+
+	subway_project_lesson_keys = ['746169184', '3176718735']
+
+	passing_students = set()
+	for row in project_submissions_cleaned:
+		if row['lesson_key'] in subway_project_lesson_keys and row['account_key'] in paid_students:
+			if row['assigned_rating'] == 'PASSED' or row['assigned_rating'] == 'DISTINCTION':
+				passing_students.add(row['account_key'])
+
+	non_passing_engagement = []
+	passing_engagement = []
+	for row in paid_engagement_in_first_week:	
+		if row['account_key'] in passing_students:
+			passing_engagement.append(row)
+		else:
+			non_passing_engagement.append(row)
+
+	print "non_passing_engagement total:", len(non_passing_engagement)
+	print "passing_engagement total:", len(passing_engagement)
+
+
 
 
 
