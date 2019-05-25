@@ -196,6 +196,8 @@ def main():
 
 	"""
 	#Find suprising data --> found the account has cancelled and join again --> fixed in within_one_week function
+	#if one user has more than one record, we use the most recent join date instead
+	
 	max_minutes = np.max(all_minutes)
 	for row in enrollments:
 		if row['account_key'] == '108':
