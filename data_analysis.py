@@ -75,6 +75,7 @@ def describe_data(data):
 	print 'Standard deviation:', np.std(data)
 	print 'Min:', np.min(data)
 	print 'Max:', np.max(data)
+	return np.mean(data)
 
 def find_engagement_stat(key_name, acct_data):
 	# total minutes visited for each account
@@ -87,7 +88,7 @@ def find_engagement_stat(key_name, acct_data):
 		total_by_account[account_key] = total
 
     # get all minutes as a list and print out some stat
-	describe_data(total_by_account.values())
+	return describe_data(total_by_account.values())
 
 def add_has_visited(data):
 	for data_point in data:
@@ -95,6 +96,25 @@ def add_has_visited(data):
 			data_point['has_visited'] = 1
 		else:
 			data_point['has_visited'] = 0
+
+#get all passing students account key from 
+def get_passing_students(project_submissions_cleaned, paid_students, subway_project_lesson_keys):
+	passing_students = set()
+	for row in project_submissions_cleaned:
+		if row['lesson_key'] in subway_project_lesson_keys and row['account_key'] in paid_students:
+			if row['assigned_rating'] == 'PASSED' or row['assigned_rating'] == 'DISTINCTION':
+				passing_students.add(row['account_key'])
+	return passing_students
+
+#get engagement data by their rating
+def get_engagement_by_rating(paid_engagement_in_first_week, passing_students):
+	non_passing_engagement, passing_engagement = [], []
+	for row in paid_engagement_in_first_week:	
+		if row['account_key'] in passing_students:
+			passing_engagement.append(row)
+		else:
+			non_passing_engagement.append(row)
+	return [passing_engagement, non_passing_engagement]
 
 def main():
 	print '********** Read csv data **********'
@@ -188,16 +208,13 @@ def main():
 	add_has_visited(daily_engagement_cleaned)
 
 
-#####################################
-#                 6                 #
-#####################################
+	#####################################
+	#                 6                 #
+	#####################################
 
-## Create a dictionary named paid_students containing all students who either
-## haven't canceled yet or who remained enrolled for more than 7 days. The keys
-## should be account keys, and the values should be the date the student enrolled.
-
-
-	### get paid students ###
+	## Create a dictionary named paid_students containing all students who either
+	## haven't canceled yet or who remained enrolled for more than 7 days. The keys
+	## should be account keys, and the values should be the date the student enrolled.
 	print '********** Get paid_students **********'
 	paid_students = {}
 	for row in enrollments_cleaned:
@@ -268,25 +285,31 @@ def main():
 	## The first list should contain data for students who eventually pass the
 	## subway project, and the second list should contain data for students
 	## who do not.
-
+	print '********** Get engagement record by student who pass the project and who didn\'t **********'
 	subway_project_lesson_keys = ['746169184', '3176718735']
-
-	passing_students = set()
-	for row in project_submissions_cleaned:
-		if row['lesson_key'] in subway_project_lesson_keys and row['account_key'] in paid_students:
-			if row['assigned_rating'] == 'PASSED' or row['assigned_rating'] == 'DISTINCTION':
-				passing_students.add(row['account_key'])
-
-	non_passing_engagement = []
-	passing_engagement = []
-	for row in paid_engagement_in_first_week:	
+	passing_students = get_passing_students(project_submissions_cleaned, paid_students, subway_project_lesson_keys )
+	engagement_by_rating = get_engagement_by_rating(paid_engagement_in_first_week, passing_students)
+	passing_engagement, non_passing_engagement = engagement_by_rating[0], engagement_by_rating[1]
+	"""for row in paid_engagement_in_first_week:	
 		if row['account_key'] in passing_students:
 			passing_engagement.append(row)
 		else:
-			non_passing_engagement.append(row)
+			non_passing_engagement.append(row)"""
 
-	print "non_passing_engagement total:", len(non_passing_engagement)
 	print "passing_engagement total:", len(passing_engagement)
+	print "non_passing_engagement total:", len(non_passing_engagement)
+
+	non_passing_engagement_by_account = group_data(non_passing_engagement, 'account_key')
+	passing_engagement_by_account = group_data(passing_engagement, 'account_key')
+	
+	print '********** non_passing_engagement ********** '
+	non_passing_total_mins_visited_mean = find_engagement_stat('total_minutes_visited', non_passing_engagement_by_account)
+	#print 'non_passing', non_passing_total_mins_visited_mean
+	print '********** passing_engagement ********** '
+	passing_total_mins_visited_mean = find_engagement_stat('total_minutes_visited', passing_engagement_by_account)
+	#print 'passing', passing_total_mins_visited_mean
+	print "Passing mean over non_passing mean of total minutes visited: ", (passing_total_mins_visited_mean - non_passing_total_mins_visited_mean) / non_passing_total_mins_visited_mean * 100, "%"
+
 
 
 
