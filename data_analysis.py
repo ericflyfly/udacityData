@@ -334,7 +334,7 @@ def main():
 	for row in non_passing_engagement:
 		months_pass_non_pass[row['utc_date'].month][1] += 1
 
-	print 'Month pass and non pass count <month: [pass_counts, non_pass_counts]:', months_pass_non_pass
+	print 'Month pass and non pass count <month: [pass_counts, non_pass_counts]>:', months_pass_non_pass
 
 	#Find month that has max people and min people pass and non pass the project
 	max_pass = [0, -1]
