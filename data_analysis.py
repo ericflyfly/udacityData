@@ -319,6 +319,8 @@ def main():
 	compare_mean_passing_non_passing(non_passing_engagement_by_account, passing_engagement_by_account, 'num_courses_visited')
 	compare_mean_passing_non_passing(non_passing_engagement_by_account, passing_engagement_by_account, 'projects_completed')
 
+	#!!! can improve this part later !!!
+
 	#passing and non passing students in each month
 	#Find how many months are there
 	months_pass_non_pass = defaultdict(list)
@@ -332,7 +334,7 @@ def main():
 	for row in non_passing_engagement:
 		months_pass_non_pass[row['utc_date'].month][1] += 1
 
-	print months_pass_non_pass
+	print 'Month pass and non pass count <month: [pass_counts, non_pass_counts]:', months_pass_non_pass
 
 	#Find month that has max people and min people pass and non pass the project
 	max_pass = [0, -1]
