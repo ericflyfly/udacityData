@@ -61,19 +61,19 @@ def remove_test_acct_data(data, testAcct):
 
 def within_one_week(join_date, engagement_date):
 	time_delta = engagement_date - join_date
-	return time_delta.days < 7
+	return time_delta.days < 7 and time_delta.days >= 0
 
 def main():
 	print '********** Read csv data **********'
 	#Load Data and get general information
 	enrollments = read_data('enrollments.csv')
-	print_data(enrollments, 0, 5)
+	#print_data(enrollments, 0, 5)
 	daily_engagement = read_data('daily_engagement.csv')
-	print_data(daily_engagement, 0, 5)
+	#print_data(daily_engagement, 0, 5)
 	#daily_engagement_full = read_data('daily_engagement_full.csv')
 	#print_data(daily_engagement_full, 0, 10)
 	project_submissions = read_data('project_submissions.csv')
-	print_data(project_submissions, 0, 5)
+	#print_data(project_submissions, 0, 5)
 
 	### For each of these three tables, find the number of rows in the table and
 	### the number of unique students in the table. To find the number of unique
@@ -193,6 +193,22 @@ def main():
 	print 'Standard deviation:', np.std(all_minutes)
 	print 'Min:', np.min(all_minutes)
 	print 'Max:', np.max(all_minutes)
+
+	"""
+	#Find suprising data --> found the account has cancelled and join again --> fixed in within_one_week function
+	max_minutes = np.max(all_minutes)
+	for row in enrollments:
+		if row['account_key'] == '108':
+			print row
+
+	for acct in total_minutes_by_account.keys():
+		if total_minutes_by_account[acct] == max_minutes:
+			temp = engagement_by_account[acct]
+			for row in temp:
+				print row
+			break
+	"""
+
 
 
 
