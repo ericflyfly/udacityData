@@ -170,27 +170,5 @@ def main():
 
 	print len(paid_students_engagement)
 
-	"""********** Daily enrollments data **********
-1640
-1302
-********** Daily engagement data **********
-136240
-1237
-0
-********** Submission data **********
-3642
-743
-********** Identify suprising data **********
-Number ofenrollement record with no corresponding engagement data:   71
-Number ofenrollement record with no corresponding engagement data at least a day:   3
-Number of test account: 6
-********** Length of cleaned data **********
-1622 135656 3634
-********** Get paid_students **********
-995
-********** Get engagement record **********
-21508
-"""
-
 
 main()
