@@ -2,6 +2,8 @@ import unicodecsv
 from datetime import datetime as dt
 from collections import defaultdict
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 #load csv data
 def read_data(filename):
@@ -70,25 +72,6 @@ def group_data(data, key_name):
 		grouped_data[account_key].append(data_point)
 	return grouped_data
 
-def describe_data(data):
-	print 'Mean:', np.mean(data)
-	print 'Standard deviation:', np.std(data)
-	print 'Min:', np.min(data)
-	print 'Max:', np.max(data)
-	return np.mean(data)
-
-def get_engagement_stat(key_name, acct_data):
-	# total minutes visited for each account
-	print '********** Stat of', key_name, '**********' 
-	total_by_account = {}
-	for account_key, engagement_for_student in acct_data.items():
-		total = 0
-		for engagement_record in engagement_for_student:
-			total += engagement_record[key_name]
-		total_by_account[account_key] = total
-
-    # get all minutes as a list and print out some stat
-	return describe_data(total_by_account.values())
 
 def add_has_visited(data):
 	for data_point in data:
@@ -116,18 +99,72 @@ def get_engagement_by_rating(paid_engagement_in_first_week, passing_students):
 			non_passing_engagement.append(row)
 	return [passing_engagement, non_passing_engagement]
 
-def compare_mean_passing_non_passing(non_passing_engagement_by_account, passing_engagement_by_account, field_name):
-	#print '********** mean of non_passing_engagement ********** '
-	non_passing_total_mins_visited_mean = get_engagement_stat(field_name, non_passing_engagement_by_account)
-	#print 'non_passing', non_passing_total_mins_visited_mean
+def describe_data(data, field_name, data_name, need_hist):
+	print 'Mean:', np.mean(data)
+	print 'Standard deviation:', np.std(data)
+	print 'Min:', np.min(data)
+	print 'Max:', np.max(data)
+	if need_hist:
+		plt.hist(data, bins=20)
+		plt.xlabel(field_name)
+		plt.ylabel('Counts')
+		plt.title(data_name + ' ' + field_name)
+		plt.show()
+	return np.mean(data)
+
+def get_engagement_stat(field_name, acct_data, data_name, need_hist):
+	# total minutes visited for each account
+	print '********** Stat of', field_name, '**********' 
+	total_by_account = {}
+	for account_key, engagement_for_student in acct_data.items():
+		total = 0
+		for engagement_record in engagement_for_student:
+			total += engagement_record[field_name]
+		total_by_account[account_key] = total
+
+    # get all minutes as a list and print out some stat
+	return describe_data(total_by_account.values(), field_name, data_name, need_hist)
+
+def compare_mean_passing_non_passing(passing_engagement_by_account, non_passing_engagement_by_account, field_name):
+
 	#print '********** mean of passing_engagement ********** '
-	passing_total_mins_visited_mean = get_engagement_stat(field_name, passing_engagement_by_account)
+	passing_total_mins_visited_mean = get_engagement_stat(field_name, passing_engagement_by_account, 'passing_engagement', True)
 	#print 'passing', passing_total_mins_visited_mean
+	#print '********** mean of non_passing_engagement ********** '
+	non_passing_total_mins_visited_mean = get_engagement_stat(field_name, non_passing_engagement_by_account, 'non_passing_engagement', True)
+	#print 'non_passing', non_passing_total_mins_visited_mean
 	if non_passing_total_mins_visited_mean == 0:
 		print 'Error: non_passing_engagement_' + field_name, 'is zero!'
 		return 
 	print "Passing mean over non_passing mean of", field_name + ':', str((passing_total_mins_visited_mean - non_passing_total_mins_visited_mean) / non_passing_total_mins_visited_mean * 100) + "%"
 
+"""
+
+!!!may not need this part since compare_mean_passing_non_passing do this and we can use the data in describe_data function!!!
+
+def compute_data_for_hist(passing_engagement_by_account, non_passing_engagement_by_account, field_name):
+	res = [[], []]
+	for engagement_list in passing_engagement_by_account.values():
+		for engagement in engagement_list:
+			res[0].append(engagement[field_name])
+	for engagement_list in non_passing_engagement_by_account.values():
+		for engagement in engagement_list:
+			res[1].append(engagement[field_name])
+	return res
+
+def create_histogram_pass_non_pass(passing_engagement_by_account, non_passing_engagement_by_account, field_name):
+	pass_non_pass_counts = compute_data_for_hist(passing_engagement_by_account, non_passing_engagement_by_account, field_name)
+	plt.hist(pass_non_pass_counts[0], bins=20)
+	plt.xlabel(field_name)
+	plt.ylabel('Counts')
+	plt.title('Passing student ' + field_name)
+	plt.show()
+	plt.hist(pass_non_pass_counts[1], bins=20)
+	plt.xlabel(field_name)
+	plt.ylabel('Counts')
+	plt.title('Non Passing student ' + field_name)
+	plt.show()
+"""
 
 def main():
 	print '********** Read csv data **********'
@@ -270,9 +307,9 @@ def main():
 	print 'Standard deviation:', np.std(all_minutes)
 	print 'Min:', np.min(all_minutes)
 	print 'Max:', np.max(all_minutes)"""
-	get_engagement_stat('total_minutes_visited', engagement_by_account)
-	get_engagement_stat('lessons_completed', engagement_by_account)
-	get_engagement_stat('has_visited', engagement_by_account)
+	get_engagement_stat('total_minutes_visited', engagement_by_account, 'engagement_by_account', need_hist = False)
+	get_engagement_stat('lessons_completed', engagement_by_account, 'engagement_by_account', need_hist = False)
+	get_engagement_stat('has_visited', engagement_by_account, 'engagement_by_account', need_hist = False)
 	"""
 	#Find suprising data --> found the account has cancelled and join again --> fixed in within_one_week function
 	#if one user has more than one record, we use the most recent join date instead
@@ -315,9 +352,9 @@ def main():
 	non_passing_engagement_by_account = group_data(non_passing_engagement, 'account_key')
 	passing_engagement_by_account = group_data(passing_engagement, 'account_key')
 
-	compare_mean_passing_non_passing(non_passing_engagement_by_account, passing_engagement_by_account, 'total_minutes_visited')
-	compare_mean_passing_non_passing(non_passing_engagement_by_account, passing_engagement_by_account, 'num_courses_visited')
-	compare_mean_passing_non_passing(non_passing_engagement_by_account, passing_engagement_by_account, 'projects_completed')
+	compare_mean_passing_non_passing(passing_engagement_by_account, non_passing_engagement_by_account, 'total_minutes_visited')
+	compare_mean_passing_non_passing(passing_engagement_by_account, non_passing_engagement_by_account, 'num_courses_visited')
+	compare_mean_passing_non_passing(passing_engagement_by_account, non_passing_engagement_by_account, 'projects_completed')
 
 	#!!! can improve this part later !!!
 
@@ -364,6 +401,16 @@ def main():
 
 	print 'max_pass [month,count]:', max_pass, 'min_pass [month,count]:', min_pass, 'max_non_pass [month,count]:', max_non_pass, 'min_non_pass [month,count]:', min_non_pass 
 	print 'months_precent_pass_over_non_pass <month: precent> :', months_precent_pass_over_non_pass
+
+	#create histogram for various field
+	#minutes_spent
+	#create_histogram_pass_non_pass(passing_engagement_by_account, non_passing_engagement_by_account, 'total_minutes_visited')
+	#lessons_completed
+	#create_histogram_pass_non_pass(passing_engagement_by_account, non_passing_engagement_by_account, 'lessons_completed')
+	#day visited
+	#create_histogram_pass_non_pass(passing_engagement_by_account, non_passing_engagement_by_account, )
+	#plt.hist(data)
+	#plt.show()
 
 
 main()
