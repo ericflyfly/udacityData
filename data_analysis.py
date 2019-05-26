@@ -321,13 +321,13 @@ def main():
 
 	#!!! can improve this part later !!!
 
-	#passing and non passing students in each month
+	#passing and non passing engagements in each month
 	#Find how many months are there
 	months_pass_non_pass = defaultdict(list)
 	for row in paid_engagement_in_first_week:
 		months_pass_non_pass[row['utc_date'].month] = [0, 0]
 
-	#Find passing and non passing students in each month
+	#Find passing and non passing engagements in each month
 	for row in passing_engagement:
 		months_pass_non_pass[row['utc_date'].month][0] += 1
 
