@@ -3,6 +3,8 @@ from datetime import datetime as dt
 from collections import defaultdict
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
 
 
 #load csv data
@@ -110,6 +112,10 @@ def describe_data(data, field_name, data_name, need_hist):
 		plt.ylabel('Counts')
 		plt.title(data_name + ' ' + field_name)
 		plt.show()
+
+		#plot with seaborn
+		sns.distplot(data)
+
 	return np.mean(data)
 
 def get_engagement_stat(field_name, acct_data, data_name, need_hist):
@@ -126,21 +132,21 @@ def get_engagement_stat(field_name, acct_data, data_name, need_hist):
 	return describe_data(total_by_account.values(), field_name, data_name, need_hist)
 
 def compare_mean_passing_non_passing(passing_engagement_by_account, non_passing_engagement_by_account, field_name):
-
+	create_histogram = False
 	#print '********** mean of passing_engagement ********** '
-	passing_total_mins_visited_mean = get_engagement_stat(field_name, passing_engagement_by_account, 'passing_engagement', True)
+	passing_total_mins_visited_mean = get_engagement_stat(field_name, passing_engagement_by_account, 'passing_engagement', create_histogram)
 	#print 'passing', passing_total_mins_visited_mean
 	#print '********** mean of non_passing_engagement ********** '
-	non_passing_total_mins_visited_mean = get_engagement_stat(field_name, non_passing_engagement_by_account, 'non_passing_engagement', True)
+	non_passing_total_mins_visited_mean = get_engagement_stat(field_name, non_passing_engagement_by_account, 'non_passing_engagement',	create_histogram)
 	#print 'non_passing', non_passing_total_mins_visited_mean
 	if non_passing_total_mins_visited_mean == 0:
 		print 'Error: non_passing_engagement_' + field_name, 'is zero!'
 		return 
 	print "Passing mean over non_passing mean of", field_name + ':', str((passing_total_mins_visited_mean - non_passing_total_mins_visited_mean) / non_passing_total_mins_visited_mean * 100) + "%"
 
-"""
 
-!!!may not need this part since compare_mean_passing_non_passing do this and we can use the data in describe_data function!!!
+
+#!!! may not need this part since compare_mean_passing_non_passing do this and we can use the data in describe_data function!!!
 
 def compute_data_for_hist(passing_engagement_by_account, non_passing_engagement_by_account, field_name):
 	res = [[], []]
@@ -154,17 +160,9 @@ def compute_data_for_hist(passing_engagement_by_account, non_passing_engagement_
 
 def create_histogram_pass_non_pass(passing_engagement_by_account, non_passing_engagement_by_account, field_name):
 	pass_non_pass_counts = compute_data_for_hist(passing_engagement_by_account, non_passing_engagement_by_account, field_name)
-	plt.hist(pass_non_pass_counts[0], bins=20)
-	plt.xlabel(field_name)
-	plt.ylabel('Counts')
-	plt.title('Passing student ' + field_name)
-	plt.show()
-	plt.hist(pass_non_pass_counts[1], bins=20)
-	plt.xlabel(field_name)
-	plt.ylabel('Counts')
-	plt.title('Non Passing student ' + field_name)
-	plt.show()
-"""
+	print('hello there !!!!!!!!!')
+	sns.distplot(pass_non_pass_counts[0])
+#!!!! end
 
 def main():
 	print '********** Read csv data **********'
@@ -404,7 +402,7 @@ def main():
 
 	#create histogram for various field
 	#minutes_spent
-	#create_histogram_pass_non_pass(passing_engagement_by_account, non_passing_engagement_by_account, 'total_minutes_visited')
+	create_histogram_pass_non_pass(passing_engagement_by_account, non_passing_engagement_by_account, 'total_minutes_visited')
 	#lessons_completed
 	#create_histogram_pass_non_pass(passing_engagement_by_account, non_passing_engagement_by_account, 'lessons_completed')
 	#day visited
